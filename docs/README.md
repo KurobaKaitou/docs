@@ -2,7 +2,7 @@
 home: true
 heroImage: /avatar.jpg
 heroText: Hikari
-tagline: 文档、笔记、博客
+tagline: 文档、笔记
 actionLink: /zh/guide/
 footer: MIT Licensed | Copyright © 2018-2023 Hikari
 ---
