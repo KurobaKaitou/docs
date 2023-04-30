@@ -1,0 +1,27 @@
+{
+  "name": "docs",
+  "version": "1.0.0",
+  "description": "一个由Vuepress构建的文档",
+  "main": "index.js",
+  "scripts": {
+    "docs:dev": "vuepress dev docs",
+    "docs:build": "vuepress build docs",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "deploy":"bash deploy.sh"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/KurobaKaitou/docs.git"
+  },
+  "author": "hikari",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/KurobaKaitou/docs/issues"
+  },
+  "homepage": "https://github.com/KurobaKaitou/docs#readme",
+  "devDependencies": {
+    "@vuepress/plugin-search": "^2.0.0-beta.61",
+    "vuepress": "^2.0.0-beta.61",
+    "vuepress-plugin-copy-code2": "^2.0.0-beta.206"
+  }
+}
