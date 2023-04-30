@@ -6,6 +6,7 @@ import pluginConfig from './config/plugins'
 
 export default defineUserConfig({
     title: 'hikari',
+    base:'/docs/',
     description: '这是一个由Vuepress构建的文档',
     head: [['link', { rel: 'icon', href: '/logo.png' }]],
     theme: defaultTheme({
