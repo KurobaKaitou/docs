@@ -8,14 +8,14 @@ export default defineUserConfig({
     title: 'hikari',
     description: '这是一个由Vuepress构建的文档',
     head: [
-        ['link', { rel: 'icon', href: '/avatar.jpg' }]
+        ['link', { rel: 'icon', href: '/docs/avatar.jpg' }]
     ],
-    base:'/docs/',
+    base: '/docs/',
     theme: defaultTheme({
         repo: 'KurobaKaitou/docs',
         lastUpdated: true,
         lastUpdatedText: '上次更新',
-        contributors:true,
+        contributors: true,
         contributorsText: '贡献者',
         editLink: true,
         editLinkText: '编辑此页',
