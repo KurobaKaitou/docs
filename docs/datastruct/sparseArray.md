@@ -292,7 +292,7 @@ public class ArrayQueue {
 
 ### 数组模拟环形队列思路
 
-![](image/image_-Eh-CVAETJ.png)
+<img :src="$withBase('/img/0055.png')">
 
 -   front变量的含义做出调整：front就指向队列的第一个元素，也就是说arr\[front] 就是队列的第一个元素，front 的初始值为0
 -   rear变量的含义也做出调整：rear指向队列的最后一个元素的后一个位置。因为希望空出一个空间作为约定，rear的初始值为0
