@@ -1,6 +1,7 @@
 export default [
     { text: '首页', link: '/' },
     { text: '前言', link: '/preview/' },
+    { text: '数据结构', link: '/datastruct/preview.md' },
     {
         text: '后端', ariaLabel: 'Backend', children: [
             {

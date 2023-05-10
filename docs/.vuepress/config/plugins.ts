@@ -26,6 +26,7 @@ export default [
         getExtraFields: (page) => (page.frontmatter.tags ?? []) as string[],
     }),
     copyCodePlugin({
-        showInMobile:true
-    })
+        showInMobile: true
+    }),
+    
 ]

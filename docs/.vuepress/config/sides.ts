@@ -1,12 +1,22 @@
-export default [
-    {
-        text: 'Netty',
+export default {
+    '/backend/netty/': [
+        {
+            text: 'Netty',
+            collapsable: false, // 可选的, 默认值是 true,
+            children: [
+                'nio.md',
+                'introduction.md',
+                'advanced.md',
+                'optimization.md'
+            ]
+        }
+    ],
+    '/datastruct/': [{
+        text: '数据结构',
         collapsable: false, // 可选的, 默认值是 true,
         children: [
-            '/backend/netty/nio.md',
-            '/backend/netty/introduction.md',
-            '/backend/netty/advanced.md',
-            '/backend/netty/optimization.md'
+            'preview.md',
+            'sparseArray.md',
         ]
-    }
-]
+    }]
+}
