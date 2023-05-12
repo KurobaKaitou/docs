@@ -16,6 +16,12 @@ export default [
                 text: '站点', children: [
                     { text: 'Design Pattern', link: 'https://java-design-patterns.com' }
                 ]
+            },
+            {
+                text: '友链', children: [
+                    { text: "Luffy's Blog", link: 'https://dreamluffe.github.io/' },
+                    { text: "Lz's Blog", link: 'https://lzangle.github.io/lzBlog/' }
+                ]
             }
         ]
     },

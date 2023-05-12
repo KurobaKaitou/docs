@@ -1,5 +1,7 @@
 import { searchPlugin } from '@vuepress/plugin-search'
 import { copyCodePlugin } from 'vuepress-plugin-copy-code2'
+import { mdEnhancePlugin } from "vuepress-plugin-md-enhance";
+
 
 export default [
     searchPlugin({
@@ -28,5 +30,8 @@ export default [
     copyCodePlugin({
         showInMobile: true
     }),
-    
+    mdEnhancePlugin({
+        // 你的选项
+        mermaid: true,
+    }),
 ]
