@@ -3,7 +3,6 @@ import navConfig from './config/navs'
 import sideConfig from './config/sides'
 import pluginConfig from './config/plugins'
 
-
 export default defineUserConfig({
     title: 'hikari',
     description: '这是一个由Vuepress构建的文档',

@@ -17,6 +17,8 @@ export default {
         children: [
             'preview.md',
             'sparseArray.md',
+            'queue.md',
+            'linkedList.md'
         ]
     }]
 }
