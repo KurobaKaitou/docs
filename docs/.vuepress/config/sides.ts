@@ -20,5 +20,13 @@ export default {
             'queue.md',
             'linkedList.md'
         ]
+    }],
+    '/frontend/typescript/':[{
+        text: 'TypeScript',
+        collapsable: false, // 可选的, 默认值是 true,
+        children: [
+            'getting-start.md',
+            'object-oriented.md'
+        ]
     }]
 }

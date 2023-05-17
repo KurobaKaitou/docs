@@ -4,8 +4,9 @@ export default [
     { text: '数据结构', link: '/datastruct/preview.md' },
     {
         text: '前端', ariaLabel: 'Frontend', children: [
+            { text: 'TypeScript', link: '/frontend/typescript/getting-start.md' },
             {
-                text: 'Promise', link: '/frontend/promise.md'
+                text: 'Promise', link: '/frontend/promise/'
             }
         ]
     },
