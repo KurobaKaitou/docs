@@ -3,6 +3,13 @@ export default [
     { text: '前言', link: '/preview/' },
     { text: '数据结构', link: '/datastruct/preview.md' },
     {
+        text: '前端', ariaLabel: 'Frontend', children: [
+            {
+                text: 'Promise', link: '/frontend/promise.md'
+            }
+        ]
+    },
+    {
         text: '后端', ariaLabel: 'Backend', children: [
             {
                 text: 'Netty', link: '/backend/netty/nio.md'
