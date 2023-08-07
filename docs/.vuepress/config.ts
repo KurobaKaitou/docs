@@ -14,8 +14,6 @@ export default defineUserConfig({
         repo: 'KurobaKaitou/docs',
         lastUpdated: true,
         lastUpdatedText: '上次更新',
-        contributors: true,
-        contributorsText: '贡献者',
         editLink: true,
         editLinkText: '编辑此页',
         docsBranch: 'main',

@@ -21,12 +21,21 @@ export default {
             'linkedList.md'
         ]
     }],
-    '/frontend/typescript/':[{
+    '/frontend/typescript/': [{
         text: 'TypeScript',
         collapsable: false, // 可选的, 默认值是 true,
         children: [
             'getting-start.md',
             'object-oriented.md'
         ]
-    }]
+    }],
+    '/backend/docker/': [
+        {
+            text: 'Docker',
+            collapsable: false,
+            children:[
+                'README.md'
+            ]
+        }
+    ]
 }

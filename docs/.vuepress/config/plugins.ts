@@ -35,10 +35,10 @@ export default [
         mermaid: true
     }),
     VssuePlugin({
-        platform:'github-v4',
-        owner:'KurobaKaitou',
-        repo:'docs',
-        clientId:'f34e262164dcb3afe992',
-        clientSecret:'1ab8f5e33b5432207d7b0ffbf7b6f8f8003331bf'
+        platform: 'github-v4',
+        owner: 'KurobaKaitou',
+        repo: 'docs',
+        clientId: 'f34e262164dcb3afe992',
+        clientSecret: '1ab8f5e33b5432207d7b0ffbf7b6f8f8003331bf'
     })
 ]
