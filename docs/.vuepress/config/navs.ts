@@ -29,13 +29,13 @@ export default [
     ariaLabel: "Other",
     children: [
       { text: "书签", link: "/bookmark/" },
+      { text: "文件小屋", link: "https://www.zhilin.club/alist/" },
       {
         text: "站点",
         children: [
           { text: "Design Pattern", link: "https://java-design-patterns.com" },
         ],
       },
-      { text: "文件小屋", link: "https://www.zhilin.club/alist/" },
       {
         text: "友链",
         children: [
