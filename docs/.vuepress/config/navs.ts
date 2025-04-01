@@ -1,7 +1,6 @@
 export default [
   { text: "首页", link: "/" },
   { text: "前言", link: "/preview/" },
-  { text: "数据结构", link: "/datastruct/preview.md" },
   {
     text: "前端",
     ariaLabel: "Frontend",
@@ -28,7 +27,8 @@ export default [
     text: "更多",
     ariaLabel: "Other",
     children: [
-      { text: "书签", link: "/bookmark/" },
+      { text: "书签", link: "/bookmark/bookmark" },
+      { text: "面试相关经验", link: "/bookmark/job/interview" },
       { text: "文件小屋", link: "https://www.zhilin.club/alist/" },
       {
         text: "站点",
