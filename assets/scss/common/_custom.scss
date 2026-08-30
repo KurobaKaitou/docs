@@ -1,1 +1,39 @@
 // Put your custom SCSS code here
+
+// ------------------------------------------------------------------
+// 全站背景纹理：沿用旧 VuePress 博客的点阵图案（12x12 平铺，alpha 6%）
+// 深色模式下黑色点阵不可见，故换用同布局的白色变体保持质感
+// ------------------------------------------------------------------
+body {
+  background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAMCAYAAABWdVznAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAACFJREFUeNpiZGBg4GegAsBlCD8TqSYNQg2Mo6FEBAAIMACdPABtrSW/IQAAAABJRU5ErkJggg==");
+  background-repeat: repeat;
+  background-attachment: fixed;
+}
+
+@include color-mode(dark) {
+  body {
+    background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAMCAYAAABWdVznAAAAHklEQVR4nGP4//8/PymYAUhgw/y4xIeLhtFQIqQBAJxysPQd2z+uAAAAAElFTkSuQmCC");
+  }
+}
+
+// ------------------------------------------------------------------
+// 代码块「mac 红绿灯」装饰：红黄绿三点（沿自旧 VuePress 博客）
+// 画在 .chroma 的背景上，横向滚动时圆点保持不动
+// ------------------------------------------------------------------
+.highlight > .chroma {
+  background-image:
+    radial-gradient(#ff4742 3.5px, rgba(255, 71, 66, 0) 4px),
+    radial-gradient(#fcd019 3.5px, rgba(252, 208, 25, 0) 4px),
+    radial-gradient(#76d876 3.5px, rgba(118, 216, 118, 0) 4px);
+  background-repeat: no-repeat, no-repeat, no-repeat;
+  background-position:
+    left 1rem top 13px,
+    left 2rem top 13px,
+    left 3rem top 13px;
+  background-size: 10px 10px, 10px 10px, 10px 10px;
+}
+
+// 代码区顶部留出红绿灯的位置
+.highlight > pre {
+  padding-top: 2.35rem;
+}

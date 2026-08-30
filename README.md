@@ -76,6 +76,7 @@ content/docs/
 | 关于页 | `content/about.md` |
 | 首页文案 | `content/_index.md`（正文）+ `layouts/home.html`（版块） |
 | 界面中文文案 | `i18n/zh.toml` |
+| 自定义样式（背景纹理/代码块红绿灯等） | `assets/scss/common/_custom.scss` |
 | 编辑跳转的仓库地址 | `params.toml` 里的 `docsRepo` |
 
 ## 部署
