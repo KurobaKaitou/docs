@@ -25,27 +25,23 @@ buffer --> channel
 
 常见的 Channel 有
 
-* FileChannel
-* DatagramChannel
-* SocketChannel
-* ServerSocketChannel
-
-
+- FileChannel
+- DatagramChannel
+- SocketChannel
+- ServerSocketChannel
 
 buffer 则用来缓冲读写数据，常见的 buffer 有
 
-* ByteBuffer
-  * MappedByteBuffer
-  * DirectByteBuffer
-  * HeapByteBuffer
-* ShortBuffer
-* IntBuffer
-* LongBuffer
-* FloatBuffer
-* DoubleBuffer
-* CharBuffer
-
-
+- ByteBuffer
+  - MappedByteBuffer
+  - DirectByteBuffer
+  - HeapByteBuffer
+- ShortBuffer
+- IntBuffer
+- LongBuffer
+- FloatBuffer
+- DoubleBuffer
+- CharBuffer
 
 ### 1.2 Selector
 
@@ -61,17 +57,12 @@ t2(thread) --> s2(socket2)
 t3(thread) --> s3(socket3)
 end
 ```
+
 #### ⚠️ 多线程版缺点
 
-* 内存占用高
-* 线程上下文切换成本高
-* 只适合连接数少的场景
-
-
-
-
-
-
+- 内存占用高
+- 线程上下文切换成本高
+- 只适合连接数少的场景
 
 #### 线程池版设计
 
@@ -84,18 +75,11 @@ t4(thread) -.-> s6(socket3)
 t5(thread) -.-> s7(socket4)
 end
 ```
+
 #### ⚠️ 线程池版缺点
 
-* 阻塞模式下，线程仅能处理一个 socket 连接
-* 仅适合短连接场景
-
-
-
-
-
-
-
-
+- 阻塞模式下，线程仅能处理一个 socket 连接
+- 仅适合短连接场景
 
 #### selector 版设计
 
@@ -111,15 +95,7 @@ selector --> c3(channel)
 end
 ```
 
-
-
 调用 selector 的 select() 会阻塞直到 channel 发生了读写就绪事件，这些事件发生，select 方法就会返回这些事件交给 thread 来处理
-
-
-
-
-
-
 
 ## 2. ByteBuffer
 
@@ -182,9 +158,7 @@ public class ChannelDemo1 {
 10:39:03 [DEBUG] [main] c.i.n.ChannelDemo1 - 读到字节数：-1
 ```
 
-
-
-### 2.1  ByteBuffer 正确使用姿势
+### 2.1 ByteBuffer 正确使用姿势
 
 1. 向 buffer 写入数据，例如调用 channel.read(buffer)
 2. 调用 flip() 切换至**读模式**
@@ -192,15 +166,13 @@ public class ChannelDemo1 {
 4. 调用 clear() 或 compact() 切换至**写模式**
 5. 重复 1~4 步骤
 
-
-
 ### 2.2 ByteBuffer 结构
 
 ByteBuffer 有以下重要属性
 
-* capacity
-* position
-* limit
+- capacity
+- position
+- limit
 
 一开始
 
@@ -225,8 +197,6 @@ clear 动作发生后，状态
 compact 方法，是把未读完的部分向前压缩，然后切换至写模式
 
 <img src="/img/0022.png">
-
-
 
 #### 💡 调试工具类
 
@@ -401,8 +371,6 @@ public class ByteBufferUtil {
 }
 ```
 
-
-
 ### 2.3 ByteBuffer 常见方法
 
 #### 分配空间
@@ -413,14 +381,12 @@ public class ByteBufferUtil {
 Bytebuffer buf = ByteBuffer.allocate(16);
 ```
 
-
-
 #### 向 buffer 写入数据
 
 有两种办法
 
-* 调用 channel 的 read 方法
-* 调用 buffer 自己的 put 方法
+- 调用 channel 的 read 方法
+- 调用 buffer 自己的 put 方法
 
 ```java
 int readBytes = channel.read(buf);
@@ -432,14 +398,12 @@ int readBytes = channel.read(buf);
 buf.put((byte)127);
 ```
 
-
-
 #### 从 buffer 读取数据
 
 同样有两种办法
 
-* 调用 channel 的 write 方法
-* 调用 buffer 自己的 get 方法
+- 调用 channel 的 write 方法
+- 调用 buffer 自己的 get 方法
 
 ```java
 int writeBytes = channel.write(buf);
@@ -453,10 +417,8 @@ byte b = buf.get();
 
 get 方法会让 position 读指针向后走，如果想重复读取数据
 
-* 可以调用 rewind 方法将 position 重新置为 0
-* 或者调用 get(int i) 方法获取索引 i 的内容，它不会移动读指针
-
-
+- 可以调用 rewind 方法将 position 重新置为 0
+- 或者调用 get(int i) 方法获取索引 i 的内容，它不会移动读指针
 
 #### mark 和 reset
 
@@ -465,8 +427,6 @@ mark 是在读取时，做一个标记，即使 position 改变，只要调用 r
 > **注意**
 >
 > rewind 和 flip 都会清除 mark 位置
-
-
 
 #### 字符串与 ByteBuffer 互转
 
@@ -499,13 +459,9 @@ class java.nio.HeapCharBuffer
 你好
 ```
 
-
-
 #### ⚠️ Buffer 的线程安全
 
 > Buffer 是**非线程安全的**
-
-
 
 ### 2.4 Scattering Reads
 
@@ -555,8 +511,6 @@ try (RandomAccessFile file = new RandomAccessFile("helloword/3parts.txt", "rw"))
 +--------+-------------------------------------------------+----------------+
 ```
 
-
-
 ### 2.5 Gathering Writes
 
 使用如下方式写入，可以将多个 buffer 的数据填充至 channel
@@ -601,21 +555,19 @@ try (RandomAccessFile file = new RandomAccessFile("helloword/3parts.txt", "rw"))
 onetwothreefourfive
 ```
 
-
-
 ### 2.6 练习
 
 网络上有多条数据发送给服务端，数据之间使用 \n 进行分隔
 但由于某种原因这些数据在接收时，被进行了重新组合，例如原始数据有3条为
 
-* Hello,world\n
-* I'm zhangsan\n
-* How are you?\n
+- Hello,world\n
+- I'm zhangsan\n
+- How are you?\n
 
 变成了下面的两个 byteBuffer (黏包，半包)
 
-* Hello,world\nI'm zhangsan\nHo
-* w are you?\n
+- Hello,world\nI'm zhangsan\nHo
+- w are you?\n
 
 现在要求你编写程序，将错乱的数据恢复成原始的按 \n 分隔的数据
 
@@ -648,8 +600,6 @@ private static void split(ByteBuffer source) {
 }
 ```
 
-
-
 ## 3. 文件编程
 
 ### 3.1 FileChannel
@@ -658,17 +608,13 @@ private static void split(ByteBuffer source) {
 
 > FileChannel 只能工作在阻塞模式下
 
-
-
 #### 获取
 
 不能直接打开 FileChannel，必须通过 FileInputStream、FileOutputStream 或者 RandomAccessFile 来获取 FileChannel，它们都有 getChannel 方法
 
-* 通过 FileInputStream 获取的 channel 只能读
-* 通过 FileOutputStream 获取的 channel 只能写
-* 通过 RandomAccessFile 是否能读写根据构造 RandomAccessFile 时的读写模式决定
-
-
+- 通过 FileInputStream 获取的 channel 只能读
+- 通过 FileOutputStream 获取的 channel 只能写
+- 通过 RandomAccessFile 是否能读写根据构造 RandomAccessFile 时的读写模式决定
 
 #### 读取
 
@@ -677,8 +623,6 @@ private static void split(ByteBuffer source) {
 ```java
 int readBytes = channel.read(buffer);
 ```
-
-
 
 #### 写入
 
@@ -696,13 +640,9 @@ while(buffer.hasRemaining()) {
 
 在 while 中调用 channel.write 是因为 write 方法并不能保证一次将 buffer 中的内容全部写入 channel
 
-
-
 #### 关闭
 
 channel 必须关闭，不过调用了 FileInputStream、FileOutputStream 或者 RandomAccessFile 的 close 方法会间接地调用 channel 的 close 方法
-
-
 
 #### 位置
 
@@ -721,22 +661,16 @@ channel.position(newPos);
 
 设置当前位置时，如果设置为文件的末尾
 
-* 这时读取会返回 -1 
-* 这时写入，会追加内容，但要注意如果 position 超过了文件末尾，再写入时在新内容和原末尾之间会有空洞（00）
-
-
+- 这时读取会返回 -1
+- 这时写入，会追加内容，但要注意如果 position 超过了文件末尾，再写入时在新内容和原末尾之间会有空洞（00）
 
 #### 大小
 
 使用 size 方法获取文件的大小
 
-
-
 #### 强制写入
 
-操作系统出于性能的考虑，会将数据缓存，不是立刻写入磁盘。可以调用 force(true)  方法将文件内容和元数据（文件的权限等信息）立刻写入磁盘
-
-
+操作系统出于性能的考虑，会将数据缓存，不是立刻写入磁盘。可以调用 force(true) 方法将文件内容和元数据（文件的权限等信息）立刻写入磁盘
 
 ### 3.2 两个 Channel 传输数据
 
@@ -760,8 +694,6 @@ System.out.println("transferTo 用时：" + (end - start) / 1000_000.0);
 ```
 transferTo 用时：8.2011
 ```
-
-
 
 超过 2g 大小的文件传输
 
@@ -795,14 +727,12 @@ position:4294967294 left:3474980866
 position:6442450941 left:1327497219
 ```
 
-
-
 ### 3.3 Path
 
 jdk7 引入了 Path 和 Paths 类
 
-* Path 用来表示文件路径
-* Paths 是工具类，用来获取 Path 实例
+- Path 用来表示文件路径
+- Paths 是工具类，用来获取 Path 实例
 
 ```java
 Path source = Paths.get("1.txt"); // 相对路径 使用 user.dir 环境变量来定位 1.txt
@@ -814,8 +744,8 @@ Path source = Paths.get("d:/1.txt"); // 绝对路径 同样代表了  d:\1.txt
 Path projects = Paths.get("d:\\data", "projects"); // 代表了  d:\data\projects
 ```
 
-* `.` 代表了当前路径
-* `..` 代表了上一级路径
+- `.` 代表了当前路径
+- `..` 代表了上一级路径
 
 例如目录结构如下
 
@@ -842,8 +772,6 @@ d:\data\projects\a\..\b
 d:\data\projects\b
 ```
 
-
-
 ### 3.4 Files
 
 检查文件是否存在
@@ -853,8 +781,6 @@ Path path = Paths.get("helloword/data.txt");
 System.out.println(Files.exists(path));
 ```
 
-
-
 创建一级目录
 
 ```java
@@ -862,10 +788,8 @@ Path path = Paths.get("helloword/d1");
 Files.createDirectory(path);
 ```
 
-* 如果目录已存在，会抛异常 FileAlreadyExistsException
-* 不能一次创建多级目录，否则会抛异常 NoSuchFileException
-
-
+- 如果目录已存在，会抛异常 FileAlreadyExistsException
+- 不能一次创建多级目录，否则会抛异常 NoSuchFileException
 
 创建多级目录用
 
@@ -873,8 +797,6 @@ Files.createDirectory(path);
 Path path = Paths.get("helloword/d1/d2");
 Files.createDirectories(path);
 ```
-
-
 
 拷贝文件
 
@@ -885,15 +807,13 @@ Path target = Paths.get("helloword/target.txt");
 Files.copy(source, target);
 ```
 
-* 如果文件已存在，会抛异常 FileAlreadyExistsException
+- 如果文件已存在，会抛异常 FileAlreadyExistsException
 
 如果希望用 source 覆盖掉 target，需要用 StandardCopyOption 来控制
 
 ```java
 Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING);
 ```
-
-
 
 移动文件
 
@@ -904,9 +824,7 @@ Path target = Paths.get("helloword/data.txt");
 Files.move(source, target, StandardCopyOption.ATOMIC_MOVE);
 ```
 
-* StandardCopyOption.ATOMIC_MOVE 保证文件移动的原子性
-
-
+- StandardCopyOption.ATOMIC_MOVE 保证文件移动的原子性
 
 删除文件
 
@@ -916,9 +834,7 @@ Path target = Paths.get("helloword/target.txt");
 Files.delete(target);
 ```
 
-* 如果文件不存在，会抛异常 NoSuchFileException
-
-
+- 如果文件不存在，会抛异常 NoSuchFileException
 
 删除目录
 
@@ -928,9 +844,7 @@ Path target = Paths.get("helloword/d1");
 Files.delete(target);
 ```
 
-* 如果目录还有内容，会抛异常 DirectoryNotEmptyException
-
-
+- 如果目录还有内容，会抛异常 DirectoryNotEmptyException
 
 遍历目录文件
 
@@ -941,7 +855,7 @@ public static void main(String[] args) throws IOException {
     AtomicInteger fileCount = new AtomicInteger();
     Files.walkFileTree(path, new SimpleFileVisitor<Path>(){
         @Override
-        public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) 
+        public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs)
             throws IOException {
             System.out.println(dir);
             dirCount.incrementAndGet();
@@ -949,7 +863,7 @@ public static void main(String[] args) throws IOException {
         }
 
         @Override
-        public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) 
+        public FileVisitResult visitFile(Path file, BasicFileAttributes attrs)
             throws IOException {
             System.out.println(file);
             fileCount.incrementAndGet();
@@ -961,8 +875,6 @@ public static void main(String[] args) throws IOException {
 }
 ```
 
-
-
 统计 jar 的数目
 
 ```java
@@ -970,7 +882,7 @@ Path path = Paths.get("C:\\Program Files\\Java\\jdk1.8.0_91");
 AtomicInteger fileCount = new AtomicInteger();
 Files.walkFileTree(path, new SimpleFileVisitor<Path>(){
     @Override
-    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) 
+    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs)
         throws IOException {
         if (file.toFile().getName().endsWith(".jar")) {
             fileCount.incrementAndGet();
@@ -981,22 +893,20 @@ Files.walkFileTree(path, new SimpleFileVisitor<Path>(){
 System.out.println(fileCount); // 724
 ```
 
-
-
 删除多级目录
 
 ```java
 Path path = Paths.get("d:\\a");
 Files.walkFileTree(path, new SimpleFileVisitor<Path>(){
     @Override
-    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) 
+    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs)
         throws IOException {
         Files.delete(file);
         return super.visitFile(file, attrs);
     }
 
     @Override
-    public FileVisitResult postVisitDirectory(Path dir, IOException exc) 
+    public FileVisitResult postVisitDirectory(Path dir, IOException exc)
         throws IOException {
         Files.delete(dir);
         return super.postVisitDirectory(dir, exc);
@@ -1004,13 +914,9 @@ Files.walkFileTree(path, new SimpleFileVisitor<Path>(){
 });
 ```
 
-
-
 #### ⚠️ 删除很危险
 
 > 删除是危险操作，确保要递归删除的文件夹没有重要内容
-
-
 
 拷贝多级目录
 
@@ -1038,26 +944,20 @@ long end = System.currentTimeMillis();
 System.out.println(end - start);
 ```
 
-
-
-
-
 ## 4. 网络编程
 
 ### 4.1 非阻塞 vs 阻塞
 
 #### 阻塞
 
-* 阻塞模式下，相关方法都会导致线程暂停
-  * ServerSocketChannel.accept 会在没有连接建立时让线程暂停
-  * SocketChannel.read 会在没有数据可读时让线程暂停
-  * 阻塞的表现其实就是线程暂停了，暂停期间不会占用 cpu，但线程相当于闲置
-* 单线程下，阻塞方法之间相互影响，几乎不能正常工作，需要多线程支持
-* 但多线程下，有新的问题，体现在以下方面
-  * 32 位 jvm 一个线程 320k，64 位 jvm 一个线程 1024k，如果连接数过多，必然导致 OOM，并且线程太多，反而会因为频繁上下文切换导致性能降低
-  * 可以采用线程池技术来减少线程数和线程上下文切换，但治标不治本，如果有很多连接建立，但长时间 inactive，会阻塞线程池中所有线程，因此不适合长连接，只适合短连接
-
-
+- 阻塞模式下，相关方法都会导致线程暂停
+  - ServerSocketChannel.accept 会在没有连接建立时让线程暂停
+  - SocketChannel.read 会在没有数据可读时让线程暂停
+  - 阻塞的表现其实就是线程暂停了，暂停期间不会占用 cpu，但线程相当于闲置
+- 单线程下，阻塞方法之间相互影响，几乎不能正常工作，需要多线程支持
+- 但多线程下，有新的问题，体现在以下方面
+  - 32 位 jvm 一个线程 320k，64 位 jvm 一个线程 1024k，如果连接数过多，必然导致 OOM，并且线程太多，反而会因为频繁上下文切换导致性能降低
+  - 可以采用线程池技术来减少线程数和线程上下文切换，但治标不治本，如果有很多连接建立，但长时间 inactive，会阻塞线程池中所有线程，因此不适合长连接，只适合短连接
 
 服务器端
 
@@ -1099,18 +999,14 @@ sc.connect(new InetSocketAddress("localhost", 8080));
 System.out.println("waiting...");
 ```
 
-
-
 #### 非阻塞
 
-* 非阻塞模式下，相关方法都会不会让线程暂停
-  * 在 ServerSocketChannel.accept 在没有连接建立时，会返回 null，继续运行
-  * SocketChannel.read 在没有数据可读时，会返回 0，但线程不必阻塞，可以去执行其它 SocketChannel 的 read 或是去执行 ServerSocketChannel.accept 
-  * 写数据时，线程只是等待数据写入 Channel 即可，无需等 Channel 通过网络把数据发送出去
-* 但非阻塞模式下，即使没有连接建立，和可读数据，线程仍然在不断运行，白白浪费了 cpu
-* 数据复制过程中，线程实际还是阻塞的（AIO 改进的地方）
-
-
+- 非阻塞模式下，相关方法都会不会让线程暂停
+  - 在 ServerSocketChannel.accept 在没有连接建立时，会返回 null，继续运行
+  - SocketChannel.read 在没有数据可读时，会返回 0，但线程不必阻塞，可以去执行其它 SocketChannel 的 read 或是去执行 ServerSocketChannel.accept
+  - 写数据时，线程只是等待数据写入 Channel 即可，无需等 Channel 通过网络把数据发送出去
+- 但非阻塞模式下，即使没有连接建立，和可读数据，线程仍然在不断运行，白白浪费了 cpu
+- 数据复制过程中，线程实际还是阻塞的（AIO 改进的地方）
 
 服务器端，客户端代码不变
 
@@ -1146,20 +1042,16 @@ while (true) {
 }
 ```
 
-
-
 #### 多路复用
 
 单线程可以配合 Selector 完成对多个 Channel 可读写事件的监控，这称之为多路复用
 
-* 多路复用仅针对网络 IO、普通文件 IO 没法利用多路复用
-* 如果不用 Selector 的非阻塞模式，线程大部分时间都在做无用功，而 Selector 能够保证
-  * 有可连接事件时才去连接
-  * 有可读事件才去读取
-  * 有可写事件才去写入
-    * 限于网络传输能力，Channel 未必时时可写，一旦 Channel 可写，会触发 Selector 的可写事件
-
-
+- 多路复用仅针对网络 IO、普通文件 IO 没法利用多路复用
+- 如果不用 Selector 的非阻塞模式，线程大部分时间都在做无用功，而 Selector 能够保证
+  - 有可连接事件时才去连接
+  - 有可读事件才去读取
+  - 有可写事件才去写入
+    - 限于网络传输能力，Channel 未必时时可写，一旦 Channel 可写，会触发 Selector 的可写事件
 
 ### 4.2 Selector
 
@@ -1173,16 +1065,12 @@ selector --> c3(channel)
 end
 ```
 
-
-
 好处
 
-* 一个线程配合 selector 就可以监控多个 channel 的事件，事件发生线程才去处理。避免非阻塞模式下所做无用功
-* 让这个线程能够被充分利用
-* 节约了线程的数量
-* 减少了线程上下文切换
-
-
+- 一个线程配合 selector 就可以监控多个 channel 的事件，事件发生线程才去处理。避免非阻塞模式下所做无用功
+- 让这个线程能够被充分利用
+- 节约了线程的数量
+- 减少了线程上下文切换
 
 #### 创建
 
@@ -1190,26 +1078,22 @@ end
 Selector selector = Selector.open();
 ```
 
-
-
 #### 绑定 Channel 事件
 
-也称之为注册事件，绑定的事件 selector 才会关心 
+也称之为注册事件，绑定的事件 selector 才会关心
 
 ```java
 channel.configureBlocking(false);
 SelectionKey key = channel.register(selector, 绑定事件);
 ```
 
-* channel 必须工作在非阻塞模式
-* FileChannel 没有非阻塞模式，因此不能配合 selector 一起使用
-* 绑定的事件类型可以有
-  * connect - 客户端连接成功时触发
-  * accept - 服务器端成功接受连接时触发
-  * read - 数据可读入时触发，有因为接收能力弱，数据暂不能读入的情况
-  * write - 数据可写出时触发，有因为发送能力弱，数据暂不能写出的情况
-
-
+- channel 必须工作在非阻塞模式
+- FileChannel 没有非阻塞模式，因此不能配合 selector 一起使用
+- 绑定的事件类型可以有
+  - connect - 客户端连接成功时触发
+  - accept - 服务器端成功接受连接时触发
+  - read - 数据可读入时触发，有因为接收能力弱，数据暂不能读入的情况
+  - write - 数据可写出时触发，有因为发送能力弱，数据暂不能写出的情况
 
 #### 监听 Channel 事件
 
@@ -1221,15 +1105,11 @@ SelectionKey key = channel.register(selector, 绑定事件);
 int count = selector.select();
 ```
 
-
-
 方法2，阻塞直到绑定事件发生，或是超时（时间单位为 ms）
 
 ```java
 int count = selector.select(long timeout);
 ```
-
-
 
 方法3，不会阻塞，也就是不管有没有事件，立刻返回，自己根据返回值检查是否有事件
 
@@ -1237,20 +1117,16 @@ int count = selector.select(long timeout);
 int count = selector.selectNow();
 ```
 
-
-
 #### 💡 select 何时不阻塞
 
-> * 事件发生时
->   * 客户端发起连接请求，会触发 accept 事件
->   * 客户端发送数据过来，客户端正常、异常关闭时，都会触发 read 事件，另外如果发送的数据大于 buffer 缓冲区，会触发多次读取事件
->   * channel 可写，会触发 write 事件
->   * 在 linux 下 nio bug 发生时
-> * 调用 selector.wakeup()
-> * 调用 selector.close()
-> * selector 所在线程 interrupt
-
-
+> - 事件发生时
+>   - 客户端发起连接请求，会触发 accept 事件
+>   - 客户端发送数据过来，客户端正常、异常关闭时，都会触发 read 事件，另外如果发送的数据大于 buffer 缓冲区，会触发多次读取事件
+>   - channel 可写，会触发 write 事件
+>   - 在 linux 下 nio bug 发生时
+> - 调用 selector.wakeup()
+> - 调用 selector.close()
+> - selector 所在线程 interrupt
 
 ### 4.3 处理 accept 事件
 
@@ -1269,8 +1145,6 @@ public class Client {
     }
 }
 ```
-
-
 
 服务器端代码为
 
@@ -1318,13 +1192,9 @@ public class ChannelDemo6 {
 }
 ```
 
-
-
 #### 💡 事件发生后能否不处理
 
 > 事件发生后，要么处理，要么取消（cancel），不能什么都不做，否则下次该事件仍会触发，这是因为 nio 底层使用的是水平触发
-
-
 
 ### 4.4 处理 read 事件
 
@@ -1407,24 +1277,18 @@ sun.nio.ch.ServerSocketChannelImpl[/0:0:0:0:0:0:0:0:8080]
 +--------+-------------------------------------------------+----------------+
 ```
 
-
-
 #### 💡 为何要 iter.remove()
 
 > 因为 select 在事件发生后，就会将相关的 key 放入 selectedKeys 集合，但不会在处理完后从 selectedKeys 集合中移除，需要我们自己编码删除。例如
 >
-> * 第一次触发了 ssckey 上的 accept 事件，没有移除 ssckey 
-> * 第二次触发了 sckey 上的 read 事件，但这时 selectedKeys 中还有上次的 ssckey ，在处理时因为没有真正的 serverSocket 连上了，就会导致空指针异常
-
-
+> - 第一次触发了 ssckey 上的 accept 事件，没有移除 ssckey
+> - 第二次触发了 sckey 上的 read 事件，但这时 selectedKeys 中还有上次的 ssckey ，在处理时因为没有真正的 serverSocket 连上了，就会导致空指针异常
 
 #### 💡 cancel 的作用
 
 > cancel 会取消注册在 selector 上的 channel，并从 keys 集合中删除 key 后续不会再监听事件
 
-
-
-#### ⚠️  不处理边界的问题
+#### ⚠️ 不处理边界的问题
 
 以前有同学写过这样的代码，思考注释中两个问题，以 bio 为例，其实 nio 道理是一样的
 
@@ -1477,22 +1341,18 @@ ld�
 
 为什么？
 
-
-
 #### 处理消息的边界
 
 <img src="/img/0023.png">
 
-* 一种思路是固定消息长度，数据包大小一样，服务器按预定长度读取，缺点是浪费带宽
-* 另一种思路是按分隔符拆分，缺点是效率低
-* TLV 格式，即 Type 类型、Length 长度、Value 数据，类型和长度已知的情况下，就可以方便获取消息大小，分配合适的 buffer，缺点是 buffer 需要提前分配，如果内容过大，则影响 server 吞吐量
-  * Http 1.1 是 TLV 格式
-  * Http 2.0 是 LTV 格式
-
-
+- 一种思路是固定消息长度，数据包大小一样，服务器按预定长度读取，缺点是浪费带宽
+- 另一种思路是按分隔符拆分，缺点是效率低
+- TLV 格式，即 Type 类型、Length 长度、Value 数据，类型和长度已知的情况下，就可以方便获取消息大小，分配合适的 buffer，缺点是 buffer 需要提前分配，如果内容过大，则影响 server 吞吐量
+  - Http 1.1 是 TLV 格式
+  - Http 2.0 是 LTV 格式
 
 ```mermaid
-sequenceDiagram 
+sequenceDiagram
 participant c1 as 客户端1
 participant s as 服务器
 participant b1 as ByteBuffer1
@@ -1601,34 +1461,22 @@ sc.write(Charset.defaultCharset().encode("0123456789abcdef3333\n"));
 System.in.read();
 ```
 
-
-
-
-
 #### ByteBuffer 大小分配
 
-* 每个 channel 都需要记录可能被切分的消息，因为 ByteBuffer 不能被多个 channel 共同使用，因此需要为每个 channel 维护一个独立的 ByteBuffer
-* ByteBuffer 不能太大，比如一个 ByteBuffer 1Mb 的话，要支持百万连接就要 1Tb 内存，因此需要设计大小可变的 ByteBuffer
-  * 一种思路是首先分配一个较小的 buffer，例如 4k，如果发现数据不够，再分配 8k 的 buffer，将 4k buffer 内容拷贝至 8k buffer，优点是消息连续容易处理，缺点是数据拷贝耗费性能，参考实现 [http://tutorials.jenkov.com/java-performance/resizable-array.html](http://tutorials.jenkov.com/java-performance/resizable-array.html)
-  * 另一种思路是用多个数组组成 buffer，一个数组不够，把多出来的内容写入新的数组，与前面的区别是消息存储不连续解析复杂，优点是避免了拷贝引起的性能损耗
-
-
-
-
+- 每个 channel 都需要记录可能被切分的消息，因为 ByteBuffer 不能被多个 channel 共同使用，因此需要为每个 channel 维护一个独立的 ByteBuffer
+- ByteBuffer 不能太大，比如一个 ByteBuffer 1Mb 的话，要支持百万连接就要 1Tb 内存，因此需要设计大小可变的 ByteBuffer
+  - 一种思路是首先分配一个较小的 buffer，例如 4k，如果发现数据不够，再分配 8k 的 buffer，将 4k buffer 内容拷贝至 8k buffer，优点是消息连续容易处理，缺点是数据拷贝耗费性能，参考实现 [http://tutorials.jenkov.com/java-performance/resizable-array.html](http://tutorials.jenkov.com/java-performance/resizable-array.html)
+  - 另一种思路是用多个数组组成 buffer，一个数组不够，把多出来的内容写入新的数组，与前面的区别是消息存储不连续解析复杂，优点是避免了拷贝引起的性能损耗
 
 ### 4.5 处理 write 事件
 
-
-
 #### 一次无法写完例子
 
-* 非阻塞模式下，无法保证把 buffer 中所有数据都写入 channel，因此需要追踪 write 方法的返回值（代表实际写入字节数）
-* 用 selector 监听所有 channel 的可写事件，每个 channel 都需要一个 key 来跟踪 buffer，但这样又会导致占用内存过多，就有两阶段策略
-  * 当消息处理器第一次写入消息时，才将 channel 注册到 selector 上
-  * selector 检查 channel 上的可写事件，如果所有的数据写完了，就取消 channel 的注册
-  * 如果不取消，会每次可写均会触发 write 事件
-
-
+- 非阻塞模式下，无法保证把 buffer 中所有数据都写入 channel，因此需要追踪 write 方法的返回值（代表实际写入字节数）
+- 用 selector 监听所有 channel 的可写事件，每个 channel 都需要一个 key 来跟踪 buffer，但这样又会导致占用内存过多，就有两阶段策略
+  - 当消息处理器第一次写入消息时，才将 channel 注册到 selector 上
+  - selector 检查 channel 上的可写事件，如果所有的数据写完了，就取消 channel 的注册
+  - 如果不取消，会每次可写均会触发 write 事件
 
 ```java
 public class WriteServer {
@@ -1716,40 +1564,22 @@ public class WriteClient {
 }
 ```
 
-
-
 #### 💡 write 为何要取消
 
 只要向 channel 发送数据时，socket 缓冲可写，这个事件会频繁触发，因此应当只在 socket 缓冲区写不下时再关注可写事件，数据写完之后再取消关注
 
-
-
-
-
-
-
-
-
-
-
 ### 4.6 更进一步
-
-
 
 #### 💡 利用多线程优化
 
 > 现在都是多核 cpu，设计时要充分考虑别让 cpu 的力量被白白浪费
 
-
-
 前面的代码只有一个选择器，没有充分利用多核 cpu，如何改进呢？
 
 分两组选择器
 
-* 单线程配一个选择器，专门处理 accept 事件
-* 创建 cpu 核心数的线程，每个线程配一个选择器，轮流处理 read 事件
-
-
+- 单线程配一个选择器，专门处理 accept 事件
+- 创建 cpu 核心数的线程，每个线程配一个选择器，轮流处理 read 事件
 
 ```java
 public class ChannelDemo7 {
@@ -1886,19 +1716,15 @@ public class ChannelDemo7 {
 }
 ```
 
-
-
 #### 💡 如何拿到 cpu 个数
 
-> * Runtime.getRuntime().availableProcessors() 如果工作在 docker 容器下，因为容器不是物理隔离的，会拿到物理 cpu 个数，而不是容器申请时的个数
-> * 这个问题直到 jdk 10 才修复，使用 jvm 参数 UseContainerSupport 配置， 默认开启
-
-
+> - Runtime.getRuntime().availableProcessors() 如果工作在 docker 容器下，因为容器不是物理隔离的，会拿到物理 cpu 个数，而不是容器申请时的个数
+> - 这个问题直到 jdk 10 才修复，使用 jvm 参数 UseContainerSupport 配置， 默认开启
 
 ### 4.7 UDP
 
-* UDP 是无连接的，client 发送数据不会管 server 是否开启
-* server 这边的 receive 方法会将接收到的数据存入 byte buffer，但如果数据报文超过 buffer 大小，多出来的数据会被默默抛弃
+- UDP 是无连接的，client 发送数据不会管 server 是否开启
+- server 这边的 receive 方法会将接收到的数据存入 byte buffer，但如果数据报文超过 buffer 大小，多出来的数据会被默默抛弃
 
 首先启动服务器端
 
@@ -1924,8 +1750,6 @@ public class UdpServer {
 ```
 waiting...
 ```
-
-
 
 运行客户端
 
@@ -1953,55 +1777,47 @@ public class UdpClient {
 +--------+-------------------------------------------------+----------------+
 ```
 
-
-
-
-
 ## 5. NIO vs BIO
 
 ### 5.1 stream vs channel
 
-* stream 不会自动缓冲数据，channel 会利用系统提供的发送缓冲区、接收缓冲区（更为底层）
-* stream 仅支持阻塞 API，channel 同时支持阻塞、非阻塞 API，网络 channel 可配合 selector 实现多路复用
-* 二者均为全双工，即读写可以同时进行
-
-
+- stream 不会自动缓冲数据，channel 会利用系统提供的发送缓冲区、接收缓冲区（更为底层）
+- stream 仅支持阻塞 API，channel 同时支持阻塞、非阻塞 API，网络 channel 可配合 selector 实现多路复用
+- 二者均为全双工，即读写可以同时进行
 
 ### 5.2 IO 模型
 
 同步阻塞、同步非阻塞、同步多路复用、异步阻塞（没有此情况）、异步非阻塞
 
-* 同步：线程自己去获取结果（一个线程）
-* 异步：线程自己不去获取结果，而是由其它线程送结果（至少两个线程）
-
-
+- 同步：线程自己去获取结果（一个线程）
+- 异步：线程自己不去获取结果，而是由其它线程送结果（至少两个线程）
 
 当调用一次 channel.read 或 stream.read 后，会切换至操作系统内核态来完成真正数据读取，而读取又分为两个阶段，分别为：
 
-* 等待数据阶段
-* 复制数据阶段
+- 等待数据阶段
+- 复制数据阶段
 
 <img src="/img/0033.png">
 
-* 阻塞 IO
+- 阻塞 IO
 
   <img src="/img/0039.png">
 
-* 非阻塞  IO
+- 非阻塞 IO
 
   <img src="/img/0035.png">
 
-* 多路复用
+- 多路复用
 
   <img src="/img/0038.png">
 
-* 信号驱动
+- 信号驱动
 
-* 异步 IO
+- 异步 IO
 
   <img src="/img/0037.png">
 
-* 阻塞 IO vs 多路复用
+- 阻塞 IO vs 多路复用
 
   <img src="/img/0034.png">
 
@@ -2010,8 +1826,6 @@ public class UdpClient {
 #### 🔖 参考
 
 UNIX 网络编程 - 卷 I
-
-
 
 ### 5.3 零拷贝
 
@@ -2044,33 +1858,27 @@ socket.getOutputStream().write(buf);
 
 4. 接下来要向网卡写数据，这项能力 java 又不具备，因此又得从**用户态**切换至**内核态**，调用操作系统的写能力，使用 DMA 将 **socket 缓冲区**的数据写入网卡，不会使用 cpu
 
-
-
 可以看到中间环节较多，java 的 IO 实际不是物理设备级别的读写，而是缓存的复制，底层的真正读写是操作系统来完成的
 
-* 用户态与内核态的切换发生了 3 次，这个操作比较重量级
-* 数据拷贝了共 4 次
-
-
+- 用户态与内核态的切换发生了 3 次，这个操作比较重量级
+- 数据拷贝了共 4 次
 
 #### NIO 优化
 
-通过 DirectByteBuf 
+通过 DirectByteBuf
 
-* ByteBuffer.allocate(10)  HeapByteBuffer 使用的还是 java 内存
-* ByteBuffer.allocateDirect(10)  DirectByteBuffer 使用的是操作系统内存
+- ByteBuffer.allocate(10) HeapByteBuffer 使用的还是 java 内存
+- ByteBuffer.allocateDirect(10) DirectByteBuffer 使用的是操作系统内存
 
 <img src="/img/0025.png">
 
 大部分步骤与优化前相同，不再赘述。唯有一点：java 可以使用 DirectByteBuf 将堆外内存映射到 jvm 内存中来直接访问使用
 
-* 这块内存不受 jvm 垃圾回收的影响，因此内存地址固定，有助于 IO 读写
-* java 中的 DirectByteBuf 对象仅维护了此内存的虚引用，内存回收分成两步
-  * DirectByteBuf 对象被垃圾回收，将虚引用加入引用队列
-  * 通过专门线程访问引用队列，根据虚引用释放堆外内存
-* 减少了一次数据拷贝，用户态与内核态的切换次数没有减少
-
-
+- 这块内存不受 jvm 垃圾回收的影响，因此内存地址固定，有助于 IO 读写
+- java 中的 DirectByteBuf 对象仅维护了此内存的虚引用，内存回收分成两步
+  - DirectByteBuf 对象被垃圾回收，将虚引用加入引用队列
+  - 通过专门线程访问引用队列，根据虚引用释放堆外内存
+- 减少了一次数据拷贝，用户态与内核态的切换次数没有减少
 
 进一步优化（底层采用了 linux 2.1 后提供的 sendFile 方法），java 中对应着两个 channel 调用 transferTo/transferFrom 方法拷贝数据
 
@@ -2082,10 +1890,8 @@ socket.getOutputStream().write(buf);
 
 可以看到
 
-* 只发生了一次用户态与内核态的切换
-* 数据拷贝了 3 次
-
-
+- 只发生了一次用户态与内核态的切换
+- 数据拷贝了 3 次
 
 进一步优化（linux 2.4）
 
@@ -2097,25 +1903,21 @@ socket.getOutputStream().write(buf);
 
 整个过程仅只发生了一次用户态与内核态的切换，数据拷贝了 2 次。所谓的【零拷贝】，并不是真正无拷贝，而是在不会拷贝重复数据到 jvm 内存中，零拷贝的优点有
 
-* 更少的用户态与内核态的切换
-* 不利用 cpu 计算，减少 cpu 缓存伪共享
-* 零拷贝适合小文件传输
-
-
+- 更少的用户态与内核态的切换
+- 不利用 cpu 计算，减少 cpu 缓存伪共享
+- 零拷贝适合小文件传输
 
 ### 5.3 AIO
 
 AIO 用来解决数据复制阶段的阻塞问题
 
-* 同步意味着，在进行读写操作时，线程需要等待结果，还是相当于闲置
-* 异步意味着，在进行读写操作时，线程不必等待结果，而是将来由操作系统来通过回调方式由另外的线程来获得结果
+- 同步意味着，在进行读写操作时，线程需要等待结果，还是相当于闲置
+- 异步意味着，在进行读写操作时，线程不必等待结果，而是将来由操作系统来通过回调方式由另外的线程来获得结果
 
 > 异步模型需要底层操作系统（Kernel）提供支持
 >
-> * Windows 系统通过 IOCP 实现了真正的异步 IO
-> * Linux 系统异步 IO 在 2.6 版本引入，但其底层实现还是用多路复用模拟了异步 IO，性能没有优势
-
-
+> - Windows 系统通过 IOCP 实现了真正的异步 IO
+> - Linux 系统异步 IO 在 2.6 版本引入，但其底层实现还是用多路复用模拟了异步 IO，性能没有优势
 
 #### 文件 AIO
 
@@ -2126,7 +1928,7 @@ AIO 用来解决数据复制阶段的阻塞问题
 public class AioDemo1 {
     public static void main(String[] args) throws IOException {
         try{
-            AsynchronousFileChannel s = 
+            AsynchronousFileChannel s =
                 AsynchronousFileChannel.open(
                 	Paths.get("1.txt"), StandardOpenOption.READ);
             ByteBuffer buffer = ByteBuffer.allocate(2);
@@ -2169,16 +1971,12 @@ public class AioDemo1 {
 
 可以看到
 
-* 响应文件读取成功的是另一个线程 Thread-5
-* 主线程并没有 IO 操作阻塞
-
-
+- 响应文件读取成功的是另一个线程 Thread-5
+- 主线程并没有 IO 操作阻塞
 
 #### 💡 守护线程
 
 默认文件 AIO 使用的线程都是守护线程，所以最后要执行 `System.in.read()` 以避免守护线程意外结束
-
-
 
 #### 网络 AIO
 
@@ -2284,3 +2082,4 @@ public class AioServer {
     }
 }
 ```
+
