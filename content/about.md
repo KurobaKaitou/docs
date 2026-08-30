@@ -55,10 +55,3 @@ Netty、TypeScript、Promise、Docker…… 系统化的学习笔记，[浏览�
 - **Email**：[dimensions0718@163.com](mailto:dimensions0718@163.com)
 
 有问题或建议，欢迎通过以上方式联系我。
-
-## 友情链接
-
-{{< link-card href="https://dreamluffe.github.io/" title="Luffy's Blog" >}}
-{{< link-card href="https://lzangle.github.io/lzBlog/" title="Lz's Blog" >}}
-{{< link-card href="https://www.zhilin.club/alist/" title="文件小屋" >}}
-
