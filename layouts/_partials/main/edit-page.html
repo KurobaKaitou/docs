@@ -1,0 +1,19 @@
+{{ $path := printf "content/%s" .File.Path }}
+{{ if site.Params.doks.multilingualMode }}
+  {{ $path = printf "content/%s/%s" .Lang .File.Path }}
+{{ end }}
+{{ if isset .Site.Params "docsreposubpath" }}
+  {{ if not (eq site.Params.doks.docsRepoSubPath "") }}
+    {{ $path = printf "%s/%s" site.Params.doks.docsRepoSubPath $path }}
+  {{ end }}
+{{ end }}
+{{ $url := printf "%s/blob/%s/%s" site.Params.doks.docsRepo site.Params.doks.docsRepoBranch (replace $path "\\" "/") }}
+
+<div class="edit-page">
+  <a href="{{ $url }}">
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-edit-2">
+      <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
+    </svg>
+    {{ i18n "edit_page" }}
+  </a>
+</div>
