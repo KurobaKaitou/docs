@@ -13,7 +13,7 @@ tags:
   - "Git"
   - "开源"
   - "教程"
-contributors:
+contributors: []
 pinned: false
 homepage: false
 ---

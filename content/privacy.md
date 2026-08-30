@@ -1,8 +1,8 @@
 ---
 title: "隐私政策"
 description: "本站的隐私说明。"
-date: 2026-08-31T03:20:00+08:00
-lastmod: 2026-08-31T03:20:00+08:00
+date: 2026-08-31T02:40:00+08:00
+lastmod: 2026-08-31T02:40:00+08:00
 draft: false
 type: "legal"
 params:

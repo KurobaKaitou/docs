@@ -2,8 +2,8 @@
 title: "书签"
 description: "整理了常用的浏览器书签与学习资源。"
 summary: ""
-date: "2026-08-31T03:30:00+08:00"
-lastmod: "2026-08-31T03:30:00+08:00"
+date: "2026-08-31T02:40:00+08:00"
+lastmod: "2026-08-31T02:40:00+08:00"
 draft: false
 weight: 40
 toc: true

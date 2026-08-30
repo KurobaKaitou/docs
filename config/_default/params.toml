@@ -128,6 +128,8 @@ mathEngine = "KaTeX" # "KaTeX" (default) or "MathJax"
     suffix = "" # title hugo.toml (default)
   [seo.description]
     summaryFallback = "" # "" (default)
+    [seo.description.length]
+      errorLevel = "ignore" # ignore, warning (default), or error
   [seo.favicons]
     icon = "favicon.png" # favicon.png (default)
     svgIcon = "favicon.svg" # favicon.svg (default)

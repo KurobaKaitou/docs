@@ -6,7 +6,6 @@ disableHugoGeneratorInject = true
 enableEmoji = true
 enableGitInfo = true
 enableRobotsTXT = true
-languageCode = "zh-CN"
 rssLimit = 10
 summarylength = 70 # 70 (default)
 
@@ -64,13 +63,12 @@ copyRight = "© 2020-2026 Hanabi"
     maxAge = -1 # "30m"
 
 [taxonomies]
-  contributor = "contributors"
   category = "categories"
   tag = "tags"
 
 [permalinks]
-  blog = "/blog/:slug/"
-  docs = "/docs/:sections[1:]/:slug/"
+  blog = "/blog/:contentbasename/"
+  docs = "/docs/:sections[1:]/:contentbasename/"
 # docs = "/docs/1.0/:sections[1:]/:slug/"
 
 [minify.tdewolff.html]

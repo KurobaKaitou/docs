@@ -2,8 +2,8 @@
 title: "Promise"
 description: "Promise 学习笔记：从为什么出现 Promise 到实际用法。"
 summary: ""
-date: "2026-08-31T03:30:00+08:00"
-lastmod: "2026-08-31T03:30:00+08:00"
+date: "2026-08-31T02:40:00+08:00"
+lastmod: "2026-08-31T02:40:00+08:00"
 draft: false
 weight: 20
 toc: true

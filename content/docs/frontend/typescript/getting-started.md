@@ -2,8 +2,8 @@
 title: "TypeScript 快速入门"
 description: "TypeScript 学习笔记第一章：快速入门。"
 summary: ""
-date: "2026-08-31T03:30:00+08:00"
-lastmod: "2026-08-31T03:30:00+08:00"
+date: "2026-08-31T02:40:00+08:00"
+lastmod: "2026-08-31T02:40:00+08:00"
 draft: false
 weight: 10
 toc: true
