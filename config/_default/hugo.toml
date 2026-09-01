@@ -61,6 +61,8 @@ copyRight = "© 2020-2026 Hanabi"
   [caches.getresource]
     dir = ":cacheDir/:project"
     maxAge = -1 # "30m"
+  [caches.images]
+    dir = ":cacheDir/images"
 
 [taxonomies]
   category = "categories"
