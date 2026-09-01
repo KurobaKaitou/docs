@@ -13,7 +13,7 @@ params:
 ---
 
 <div class="text-center mb-4">
-  <img src="{{ "img/avatar.jpg" | relURL }}" alt="Hanabi 的头像" width="120" height="120" class="rounded-circle mb-3">
+  <img src="/img/avatar.jpg" alt="Hanabi 的头像" width="120" height="120" class="rounded-circle mb-3">
   <p class="lead mb-1"><strong>Hanabi</strong></p>
   <p class="text-secondary mb-2"><a href="https://github.com/KurobaKaitou">@KurobaKaitou</a> · GitHub</p>
   <p class="mb-0">
@@ -24,8 +24,6 @@ params:
   </p>
 </div>
 
-## 关于我
-
 一个喜欢写代码、折腾技术的开发者。日常游走在后端、前端和运维之间，热衷于把复杂的问题拆解清楚，再用简洁的方式记录下来。
 
 这个博客里记录的主要是技术笔记和踩坑经历——遇到过的问题、琢磨过的方案、做过的项目。写得不算勤，但每篇都尽力把前因后果交代清楚。
@@ -34,10 +32,10 @@ params:
 
 {{< card-grid >}}
 {{< card title="技术文档" icon="outline/book-2" color="blue" >}}
-Netty、TypeScript、Promise、Docker…… 系统化的学习笔记，[浏览文档 →]({{ "docs/" | relURL }})
+Netty、TypeScript、Promise、Docker…… 系统化的学习笔记，[浏览文档 →](/docs/)
 {{< /card >}}
 {{< card title="博客随笔" icon="outline/pencil" color="purple" >}}
-踩坑经历与解决方案，把每件事的前因后果交代清楚，[阅读博客 →]({{ "blog/" | relURL }})
+踩坑经历与解决方案，把每件事的前因后果交代清楚，[阅读博客 →](/blog/)
 {{< /card >}}
 {{< /card-grid >}}
 
