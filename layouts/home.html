@@ -7,8 +7,8 @@
     <div class="col-lg-9 col-xl-8 text-center">
       <p class="lead">{{ .Params.lead | safeHTML }}</p>
       <div class="my-3">
-        <a class="btn btn-primary btn-cta rounded-pill btn-lg mx-1" href="/docs/" role="button">浏览文档</a>
-        <a class="btn btn-outline-secondary btn-cta rounded-pill btn-lg mx-1" href="/blog/" role="button">阅读博客</a>
+        <a class="btn btn-primary btn-cta rounded-pill btn-lg mx-1" href="{{ "docs/" | relLangURL }}" role="button">浏览文档</a>
+        <a class="btn btn-outline-secondary btn-cta rounded-pill btn-lg mx-1" href="{{ "blog/" | relLangURL }}" role="button">阅读博客</a>
       </div>
       <div class="text-start mt-4">{{ .Content }}</div>
     </div>
@@ -48,7 +48,7 @@
   <div class="row justify-content-center text-center">
     <div class="col-lg-7">
       <h2 class="mt-2">开始探索吧</h2>
-      <a class="btn btn-primary rounded-pill px-4 my-2" href="/docs/" role="button">{{ i18n "get_started" }}</a>
+      <a class="btn btn-primary rounded-pill px-4 my-2" href="{{ "docs/" | relLangURL }}" role="button">{{ i18n "get_started" }}</a>
     </div>
   </div>
 </section>
