@@ -103,7 +103,3 @@ mvc的执行流程大致分为11步：
 <li>@EnableAutoConfiguration底层封装了@Import注解，指定了一个ImportSelector接口的实现类，低版本调用selectImports()，高版本调用getAutoConfigurationEntry(),读取当前项目下所有依赖jar包中META-INF/spring.factories、META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports两个文件里面定义的配置类</li>
 <li>在配置类中定义一个@Bean标识的方法，还定义了@Conditional开头的注解，条件如果满足，Spring会自动调用配置类中@Bean标识的方法，并把方法的返回值注册到IOC容器中</li>
 </ol>
-
-## Sql优化（索引类型、失效场景、执行计划）b+tree底层
-
-### sql优化的方法有
