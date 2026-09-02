@@ -13,7 +13,7 @@ params:
 ---
 
 <div class="text-center mb-4">
-  <img src="/img/avatar.jpg" alt="Hanabi 的头像" width="120" height="120" class="rounded-circle mb-3">
+  <img src="{{< relurl "img/avatar.jpg" >}}" alt="Hanabi 的头像" width="120" height="120" class="rounded-circle mb-3">
   <p class="lead mb-1"><strong>Hanabi</strong></p>
   <p class="text-secondary mb-2"><a href="https://github.com/KurobaKaitou">@KurobaKaitou</a> · GitHub</p>
   <p class="mb-0">
