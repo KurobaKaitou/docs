@@ -4,17 +4,8 @@ description: "分析 Coze Studio 的架构、技术栈与 55 张核心表，把�
 date: 2026-08-30T20:00:00+08:00
 lastmod: 2026-08-30T20:00:00+08:00
 draft: false
-tags:
-  - Coze
-  - AI Agent
-  - 架构设计
-  - Go
-  - MySQL
-categories:
-  - AI Agent 开发
-contributors: []
-pinned: false
-homepage: false
+weight: 15
+toc: true
 params:
   seo:
     title: ""
