@@ -18,7 +18,7 @@ params:
 
 这篇文章是这个系列的总纲：先把原项目分析清楚（架构、技术栈、55 张表），再把整个实现拆成**准备阶段 + 11 个实施阶段**。每个阶段开始前，都先用 Mermaid 把该阶段涉及的表结构和依赖关系画出来，先分析、再动手。
 
-> 路径约定：下文所有路径均相对于仓库根目录，分析基于当前开源版本，表结构以 `docker/volumes/mysql/schema.sql` 为准（共 55 张表）。
+> 路径约定：下文所有路径均相对于仓库根目录，分析基于当前[开源版本](https://github.com/coze-dev/coze-studio)，表结构以 `docker/volumes/mysql/schema.sql` 为准（共 55 张表）。
 
 ## 第 0 阶段（准备）：项目全景与开发环境
 
@@ -54,69 +54,69 @@ domain/user/
 └── internal/dal/      # 数据访问层（GORM Gen 生成的 model/query）
 ```
 
-依赖方向严格单向：`api → application → domain → crossdomain/infra`，领域层不感知 HTTP 和存储细节。**我们自建时建议保持同样的分层**，这是这个项目最值得学的工程结构。
+依赖方向严格单向：`api → application → domain → crossdomain/infra`，领域层不感知 HTTP 和存储细节。这里可以参考 [**开发规范**](https://github.com/coze-dev/coze-studio/wiki/7.-%E5%BC%80%E5%8F%91%E8%A7%84%E8%8C%83#%E9%A1%B9%E7%9B%AE%E6%9E%B6%E6%9E%84)
 
 ### 0.2 技术栈清单
 
-| 层次 | 选型 | 说明 |
-| --- | --- | --- |
-| 语言/框架 | Go ≥ 1.23 + [Hertz](https://github.com/cloudwego/hertz) | CloudWeGo HTTP 框架 |
-| LLM 编排 | [Eino](https://github.com/cloudwego/eino) + eino-ext | 字节开源的 LLM 应用编排框架，是 Agent/Workflow 引擎的底座 |
-| 模型接入 | ark / openai / claude / deepseek / gemini / qwen / ollama | eino-ext 组件，可插拔 |
-| ORM | GORM + Gen | 代码生成的类型安全查询 |
-| 关系存储 | MySQL | 55 张业务表 |
-| 缓存/会话 | Redis | 会话缓存、分布式锁、计数 |
-| 向量检索 | Milvus（可切 OceanBase） | 知识库语义检索 |
-| 全文检索 | Elasticsearch | 知识库关键词检索 |
-| 对象存储 | MinIO（S3 协议） | 文件、图片、知识库文档 |
-| 消息队列 | NSQ（可切 RocketMQ/Kafka） | 事件总线：异步索引、异步任务 |
-| 配置/注册 | etcd + 本地 conf + 环境变量 | 单体部署下 etcd 可省略 |
-| 前端 | React + TypeScript + Rush monorepo | 可视化编排界面 |
+| <div style="width: 120px;">层次</div> | 选型                                                      | 说明                                                      |
+| ------------------------------------- | --------------------------------------------------------- | --------------------------------------------------------- |
+| 语言/框架                             | Go ≥ 1.23 + [Hertz](https://github.com/cloudwego/hertz)   | CloudWeGo HTTP 框架                                       |
+| LLM 编排                              | [Eino](https://github.com/cloudwego/eino) + eino-ext      | 字节开源的 LLM 应用编排框架，是 Agent/Workflow 引擎的底座 |
+| 模型接入                              | ark / openai / claude / deepseek / gemini / qwen / ollama | eino-ext 组件，可插拔                                     |
+| ORM                                   | GORM + Gen                                                | 代码生成的类型安全查询                                    |
+| 关系存储                              | MySQL                                                     | 55 张业务表                                               |
+| 缓存/会话                             | Redis                                                     | 会话缓存、分布式锁、计数                                  |
+| 向量检索                              | Milvus（可切 OceanBase）                                  | 知识库语义检索                                            |
+| 全文检索                              | Elasticsearch                                             | 知识库关键词检索                                          |
+| 对象存储                              | MinIO（S3 协议）                                          | 文件、图片、知识库文档                                    |
+| 消息队列                              | NSQ（可切 RocketMQ/Kafka）                                | 事件总线：异步索引、异步任务                              |
+| 配置/注册                             | etcd + 本地 conf + 环境变量                               | 单体部署下 etcd 可省略                                    |
+| 前端                                  | React + TypeScript + Rush monorepo                        | 可视化编排界面                                            |
 
 ### 0.3 基础设施与部署
 
 `docker/docker-compose.yml` 一键拉起全部依赖：
 
-| 服务 | 镜像职责 | 我们自建是否必须 |
-| --- | --- | --- |
-| mysql | 业务主库，启动时执行 `docker/volumes/mysql/schema.sql` | ✅ 必须 |
-| redis | 缓存 / 分布式锁 / 会话 | ✅ 必须 |
-| minio | 对象存储（S3） | ✅ 必须（文件上传） |
-| milvus | 向量检索 | 知识库阶段引入 |
-| elasticsearch | 全文检索 | 知识库阶段引入（可先用 MySQL LIKE 过渡） |
-| nsqlookupd / nsqd / nsqadmin | 事件总线 | 异步任务阶段引入（可用 goroutine + 数据库状态机过渡） |
-| etcd | 配置与注册中心 | 单体可省略 |
-| coze-server / coze-web | 后端镜像 / 前端镜像 | 自建时即我们的应用 |
+| 服务                         | 镜像职责                                               | 是否必须                                              |
+| ---------------------------- | ------------------------------------------------------ | ----------------------------------------------------- |
+| mysql                        | 业务主库，启动时执行 `docker/volumes/mysql/schema.sql` | 必须（可使用pg代替）                                  |
+| redis                        | 缓存 / 分布式锁 / 会话                                 | 必须                                                  |
+| minio                        | 对象存储（S3）                                         | 可暂时本地存储                                        |
+| milvus                       | 向量检索                                               | 知识库阶段引入（可先用 pg 过渡）                      |
+| elasticsearch                | 全文检索                                               | 知识库阶段引入（可先用 pg 过渡）                      |
+| nsqlookupd / nsqd / nsqadmin | 事件总线                                               | 异步任务阶段引入（可用 goroutine + 数据库状态机过渡） |
+| etcd                         | 配置与注册中心                                         | 单体可省略                                            |
+| coze-server / coze-web       | 后端镜像 / 前端镜像                                    | 完整实现后从源码自构建                                |
 
 ### 0.4 配置体系
 
 `backend/conf/` 是理解这个项目的钥匙，很多「功能」其实先是一份配置：
 
-| 目录 | 作用 | 关键文件 |
-| --- | --- | --- |
-| `conf/model/` | **模型服务配置**：启动时把 JSON 种子灌入数据库 | `model_meta.json`（provider→models 声明）+ `template/*.yaml`（每类协议的参数模板） |
-| `conf/prompt/` | 提示词模板（Jinja2） | `nl2sql_template_jinja2.json`（数据库 NL2SQL）、`messages_to_query_template_jinja2.json`（Query 改写） |
-| `conf/workflow/` | 工作流引擎配置 | `config.yaml` |
-| `conf/plugin/pluginproduct/` | 官方内置插件产物 | 每个插件一份 YAML（manifest + openapi 描述） |
-| 环境变量 | 数据库/中间件地址、模型密钥 | `docker/.env`（compose 引用），OpenAI/方舟 API Key 在此配置 |
+| 目录                         | 作用                                           | 关键文件                                                                                               |
+| ---------------------------- | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `conf/model/`                | **模型服务配置**：启动时把 JSON 种子灌入数据库 | `model_meta.json`（provider→models 声明）+ `template/*.yaml`（每类协议的参数模板）                     |
+| `conf/prompt/`               | 提示词模板（Jinja2）                           | `nl2sql_template_jinja2.json`（数据库 NL2SQL）、`messages_to_query_template_jinja2.json`（Query 改写） |
+| `conf/workflow/`             | 工作流引擎配置                                 | `config.yaml`                                                                                          |
+| `conf/plugin/pluginproduct/` | 官方内置插件产物                               | 每个插件一份 YAML（manifest + openapi 描述）                                                           |
+| 环境变量                     | 数据库/中间件地址、模型密钥                    | `docker/.env`（compose 引用），OpenAI/方舟 API Key 在此配置                                            |
 
 ### 0.5 全量表清单（55 张）
 
 按领域模块分组（这是后续所有阶段的地基，建议对照着读）：
 
-| 模块 | 数据表 |
-| --- | --- |
-| 用户/空间 | `user`、`space`、`space_user`、`api_key` |
-| 模型 | `model_meta`、`model_entity`、`model_instance` |
-| 会话/执行 | `conversation`、`message`、`run_record` |
-| 智能体 | `single_agent_draft`、`single_agent_version`、`single_agent_publish`、`agent_tool_draft`、`agent_tool_version`、`prompt_resource`、`shortcut_command`、`chat_flow_role_config` |
-| 插件 | `plugin`、`plugin_draft`、`plugin_version`、`tool`、`tool_draft`、`tool_version`、`plugin_oauth_auth` |
-| 知识库 | `knowledge`、`knowledge_document`、`knowledge_document_slice`、`knowledge_document_review` |
-| 数据库表 | `draft_database_info`、`online_database_info`、`agent_to_database` |
-| 工作流 | `workflow_meta`、`workflow_draft`、`workflow_version`、`workflow_snapshot`、`workflow_reference`、`workflow_execution`、`node_execution` |
-| 应用/发布 | `app_draft`、`app_release_record`、`app_connector_release_ref`、`app_static_conversation_draft/online`、`app_dynamic_conversation_draft/online`、`app_conversation_template_draft/online`、`template`、`connector_workflow_version` |
-| 记忆/变量 | `variables_meta`、`variable_instance` |
-| 基础 | `files`、`kv_entries`、`data_copy_task` |
+| <div style="width: 100px;">模块</div> | 数据表                                                                                                                                                                                                                              |
+| ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 用户/空间                             | `user`、`space`、`space_user`、`api_key`                                                                                                                                                                                            |
+| 模型                                  | `model_meta`、`model_entity`、`model_instance`                                                                                                                                                                                      |
+| 会话/执行                             | `conversation`、`message`、`run_record`                                                                                                                                                                                             |
+| 智能体                                | `single_agent_draft`、`single_agent_version`、`single_agent_publish`、`agent_tool_draft`、`agent_tool_version`、`prompt_resource`、`shortcut_command`、`chat_flow_role_config`                                                      |
+| 插件                                  | `plugin`、`plugin_draft`、`plugin_version`、`tool`、`tool_draft`、`tool_version`、`plugin_oauth_auth`                                                                                                                               |
+| 知识库                                | `knowledge`、`knowledge_document`、`knowledge_document_slice`、`knowledge_document_review`                                                                                                                                          |
+| 数据库表                              | `draft_database_info`、`online_database_info`、`agent_to_database`                                                                                                                                                                  |
+| 工作流                                | `workflow_meta`、`workflow_draft`、`workflow_version`、`workflow_snapshot`、`workflow_reference`、`workflow_execution`、`node_execution`                                                                                            |
+| 应用/发布                             | `app_draft`、`app_release_record`、`app_connector_release_ref`、`app_static_conversation_draft/online`、`app_dynamic_conversation_draft/online`、`app_conversation_template_draft/online`、`template`、`connector_workflow_version` |
+| 记忆/变量                             | `variables_meta`、`variable_instance`                                                                                                                                                                                               |
+| 基础                                  | `files`、`kv_entries`、`data_copy_task`                                                                                                                                                                                             |
 
 ### 0.6 贯穿全局的五个设计模式
 
@@ -882,3 +882,4 @@ flowchart TD
 3. **运行时只认版本**：对话永远跑 version 快照，调试才碰 draft。守住这条，编排类产品的稳定性就有底线。
 
 各阶段都可以独立成篇展开（尤其工作流引擎和 RAG 流水线），后续我会挑实现中最有坑的部分继续写。
+
