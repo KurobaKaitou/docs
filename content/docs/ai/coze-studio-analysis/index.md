@@ -2,7 +2,7 @@
 title: "从零实现 Coze Studio：项目分析与阶段拆解"
 description: "分析 Coze Studio 的架构、技术栈与 55 张核心表，把「从零实现一个 AI Agent 开发平台」拆成 12 个可落地的阶段，每个阶段附表结构依赖图。"
 date: 2026-08-30T20:00:00+08:00
-lastmod: 2026-08-30T20:00:00+08:00
+lastmod: 2026-09-10T17:00:00+08:00
 draft: false
 weight: 15
 toc: true
@@ -17,6 +17,8 @@ params:
 最近在做一个「从零实现 [Coze Studio](https://github.com/coze-dev/coze-studio)」的项目。不是抄代码，而是**把它的领域模型、表结构和模块边界吃透之后，自己再实现一遍**——这是吃透一个优秀开源项目最扎实的路径。
 
 这篇文章是这个系列的总纲：先把原项目分析清楚（架构、技术栈、55 张表），再把整个实现拆成**准备阶段 + 11 个实施阶段**。每个阶段开始前，都先用 Mermaid 把该阶段涉及的表结构和依赖关系画出来，先分析、再动手。
+
+> **2026-09-10 更新**：本文按 minicoze 当前的实际技术方案梳理了阶段 0～2，保留对原版的完整分析作为对照。与原版的差异——PostgreSQL 单库替代 MySQL+Milvus+ES、provider-first 模型接入、模型域两层表结构、软删实现等——均在文中逐条标注。
 
 > 路径约定：下文所有路径均相对于仓库根目录，分析基于当前[开源版本](https://github.com/coze-dev/coze-studio)，表结构以 `docker/volumes/mysql/schema.sql` 为准（共 55 张表）。
 
@@ -58,56 +60,47 @@ domain/user/
 
 ### 0.2 技术栈清单
 
-| <div style="width: 120px;">层次</div> | 选型                                                      | 说明                                                      |
-| ------------------------------------- | --------------------------------------------------------- | --------------------------------------------------------- |
-| 语言/框架                             | Go ≥ 1.23 + [Hertz](https://github.com/cloudwego/hertz)   | CloudWeGo HTTP 框架                                       |
-| LLM 编排                              | [Eino](https://github.com/cloudwego/eino) + eino-ext      | 字节开源的 LLM 应用编排框架，是 Agent/Workflow 引擎的底座 |
-| 模型接入                              | ark / openai / claude / deepseek / gemini / qwen / ollama | eino-ext 组件，可插拔                                     |
-| ORM                                   | GORM + Gen                                                | 代码生成的类型安全查询                                    |
-| 关系存储                              | MySQL                                                     | 55 张业务表                                               |
-| 缓存/会话                             | Redis                                                     | 会话缓存、分布式锁、计数                                  |
-| 向量检索                              | Milvus（可切 OceanBase）                                  | 知识库语义检索                                            |
-| 全文检索                              | Elasticsearch                                             | 知识库关键词检索                                          |
-| 对象存储                              | MinIO（S3 协议）                                          | 文件、图片、知识库文档                                    |
-| 消息队列                              | NSQ（可切 RocketMQ/Kafka）                                | 事件总线：异步索引、异步任务                              |
-| 配置/注册                             | etcd + 本地 conf + 环境变量                               | 单体部署下 etcd 可省略                                    |
-| 前端                                  | React + TypeScript + Rush monorepo                        | 可视化编排界面                                            |
+原版选型是企业级全家桶，minicoze 按「单库优先、按需引入」原则收敛（2026-09 实际状态）：
+
+| <div style="width: 90px;">层次</div> | 原版选型                                                       | minicoze 选型                                            | 说明                                                                       |
+| ------------------------------------- | -------------------------------------------------------------- | -------------------------------------------------------- | -------------------------------------------------------------------------- |
+| 语言/框架                             | Go ≥ 1.23 + [Hertz](https://github.com/cloudwego/hertz)        | Go 1.25 + Hertz + **hz 代码生成**                        | Thrift IDL → handler/model/router 一键生成，与原版同款工具链                |
+| LLM 编排                              | [Eino](https://github.com/cloudwego/eino) + eino-ext           | 暂未引入（对话阶段评估）                                 | 模型列表拉取先用标准库 HTTP 实现                                            |
+| 模型接入                              | eino-ext：ark/openai/claude/deepseek/gemini/qwen/ollama        | 自研 modelfetch：**openai 兼容 + ollama**                | `infra/modelfetch/impl/<protocol>` 注册表分发，新协议加目录 + 注册一行      |
+| ORM                                   | GORM + Gen                                                     | 同（GORM + Gen，表先行）                                 | 手写 PG DDL → gen 反向生成 PO/类型安全查询                                  |
+| 关系存储                              | MySQL（55 张表）                                               | **PostgreSQL 18**                                        | 单库同时覆盖关系、向量（pgvector）与全文（tsvector），砍掉两套中间件        |
+| 缓存/会话                             | Redis                                                          | Redis 8.10（AOF）                                        | 会话、验证码、限流已在用                                                    |
+| 向量检索                              | Milvus（可切 OceanBase）                                       | pgvector（同库，HNSW）                                   | 知识库阶段启用                                                              |
+| 全文检索                              | Elasticsearch                                                  | PG tsvector + zhparser（知识库阶段）                     | 千级切片量 PG 足够                                                          |
+| 对象存储                              | MinIO（S3）                                                    | 本地磁盘起步（`infra/storage` 接口）                     | 接口已预留，规模到了换 S3                                                   |
+| 消息队列                              | NSQ（可切 RocketMQ/Kafka）                                     | 暂缓                                                     | 真实异步需求出现再引（goroutine + 数据库状态机过渡）                        |
+| 配置/注册                             | etcd + 本地 conf + 环境变量                                    | envkey + docker/.env（组合根注入）                       | 深层包禁 `os.Getenv`；`MINICOZE_SECRET_KEY` 等敏感项走环境变量              |
+| API 文档                              | —                                                              | swag 注释 + swagger UI                                   | hz 不生成文档，handler 手写 swag 注解后 `swag init` 生成                     |
+| 前端                                  | React + TypeScript + Rush monorepo                             | **Vite + React + antd 单应用**                           | MSW mock 离线开发，`VITE_ENABLE_MOCK` 一键切真后端；页面壳已含工作流画布等  |
 
 ### 0.3 基础设施与部署
 
-`docker/docker-compose.yml` 一键拉起全部依赖：
+原版 compose 一键拉起全部依赖；minicoze 的 compose 只有**两个服务**，其余按阶段引入：
 
-| 服务                         | 镜像职责                                               | 是否必须                                              |
-| ---------------------------- | ------------------------------------------------------ | ----------------------------------------------------- |
-| mysql                        | 业务主库，启动时执行 `docker/volumes/mysql/schema.sql` | 必须（可使用pg代替）                                  |
-| redis                        | 缓存 / 分布式锁 / 会话                                 | 必须                                                  |
-| minio                        | 对象存储（S3）                                         | 可暂时本地存储                                        |
-| milvus                       | 向量检索                                               | 知识库阶段引入（可先用 pg 过渡）                      |
-| elasticsearch                | 全文检索                                               | 知识库阶段引入（可先用 pg 过渡）                      |
-| nsqlookupd / nsqd / nsqadmin | 事件总线                                               | 异步任务阶段引入（可用 goroutine + 数据库状态机过渡） |
-| etcd                         | 配置与注册中心                                         | 单体可省略                                            |
-| coze-server / coze-web       | 后端镜像 / 前端镜像                                    | 完整实现后从源码自构建                                |
+| 服务                             | minicoze 中的职责                                             |
+| -------------------------------- | -------------------------------------------------------------- |
+| postgres（pgvector 镜像）        | 业务主库 + 向量 + 全文（后续）；`docker/init/*.sql` 首次建表   |
+| redis                            | 会话、验证码限流、分布式 ID 号段（AOF 持久化）                 |
+| minio / milvus / es / nsq / etcd | 按阶段引入：对象 / 向量 / 全文 / 事件 / 配置                   |
 
 ### 0.4 配置体系
 
-`backend/conf/` 是理解这个项目的钥匙，很多「功能」其实先是一份配置：
-
-| 目录                         | 作用                                           | 关键文件                                                                                               |
-| ---------------------------- | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| `conf/model/`                | **模型服务配置**：启动时把 JSON 种子灌入数据库 | `model_meta.json`（provider→models 声明）+ `template/*.yaml`（每类协议的参数模板）                     |
-| `conf/prompt/`               | 提示词模板（Jinja2）                           | `nl2sql_template_jinja2.json`（数据库 NL2SQL）、`messages_to_query_template_jinja2.json`（Query 改写） |
-| `conf/workflow/`             | 工作流引擎配置                                 | `config.yaml`                                                                                          |
-| `conf/plugin/pluginproduct/` | 官方内置插件产物                               | 每个插件一份 YAML（manifest + openapi 描述）                                                           |
+原版把很多「功能」先做成 `conf/` 里的配置（模型种子、提示词模板、插件产物）。minicoze 目前只继承了「环境变量 + 组合根注入」这一层：`docker/.env` 存连接串与 `MINICOZE_SECRET_KEY`（供应商 API Key 的 AES-GCM 加密口令），经 `application.Init` 注入依赖图；`conf/` 式的种子配置暂不需要——模型接入改成了「供应商管理 + 同步」交互（见阶段 2）。提示词模板、插件产物等配置等对应阶段再引入。
 | 环境变量                     | 数据库/中间件地址、模型密钥                    | `docker/.env`（compose 引用），OpenAI/方舟 API Key 在此配置                                            |
 
 ### 0.5 全量表清单（55 张）
 
-按领域模块分组（这是后续所有阶段的地基，建议对照着读）：
+按领域模块分组（这是后续所有阶段的地基，建议对照着读）。minicoze 当前的模型域与用户/空间域表结构如下，其余按阶段推进：
 
 | <div style="width: 100px;">模块</div> | 数据表                                                                                                                                                                                                                              |
 | ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 用户/空间                             | `user`、`space`、`space_user`、`api_key`                                                                                                                                                                                            |
-| 模型                                  | `model_meta`、`model_entity`、`model_instance`                                                                                                                                                                                      |
+| 用户/空间                             | `user`、`space`、`space_user`（`api_key` 暂缓，PAT 阶段引入）                                                                                                                                                                       |
+| 模型                                  | minicoze 两张：`model_provider`、`model_instance`（原版 `model_meta`/`model_entity` 为废弃死表不迁移，见阶段 2）                                                                                                                     |
 | 会话/执行                             | `conversation`、`message`、`run_record`                                                                                                                                                                                             |
 | 智能体                                | `single_agent_draft`、`single_agent_version`、`single_agent_publish`、`agent_tool_draft`、`agent_tool_version`、`prompt_resource`、`shortcut_command`、`chat_flow_role_config`                                                      |
 | 插件                                  | `plugin`、`plugin_draft`、`plugin_version`、`tool`、`tool_draft`、`tool_version`、`plugin_oauth_auth`                                                                                                                               |
@@ -118,49 +111,63 @@ domain/user/
 | 记忆/变量                             | `variables_meta`、`variable_instance`                                                                                                                                                                                               |
 | 基础                                  | `files`、`kv_entries`、`data_copy_task`                                                                                                                                                                                             |
 
+建表流程差异：原版一份 `schema.sql` 全量初始化；minicoze 每个领域一份 `docker/init/NN-<domain>.sql`（首次建库由 postgres 入口脚本按序自动执行），表结构先手写 DDL、再用 gorm gen 反向生成代码。
+
 ### 0.6 贯穿全局的五个设计模式
 
 读表之前先记住这五个反复出现的模式，后面每个阶段都在用：
 
 1. **三态发布模型**：几乎所有资源都是 `xxx_draft`（草稿）→ `xxx_version`（版本快照）→ `xxx_publish`（发布记录）三张表。编辑永远改草稿，发布时冻结成版本，线上跑的是版本。这是整个系统的灵魂，阶段 4 会展开。
 2. **JSON 弱引用聚合**：智能体对插件、知识库、工作流的引用，存的是 JSON 数组（id + 配置快照），而不是强外键。换来的是跨模块解耦，代价是要自己做一致性校验。
-3. **雪花 ID**：全系统不用数据库自增（个别表除外），统一分布式 ID 生成（`infra/idgen`），bigint 主键。
-4. **毫秒时间戳 + 软删除**：`created_at/updated_at` 全部是毫秒级 bigint，删除基本都是 `deleted_at` 软删。
+3. **ID 生成（minicoze 演进为双轨制）**：原版全系统雪花 ID。minicoze 的实际策略是**表级自选**——user/space 沿用雪花（`infra/idgen`，已接入），model 域用 PG `IDENTITY` 自增（小表、单实例写入，`GENERATED BY DEFAULT` 保留了切换雪花的后门）。策略跟着写入规模走，不搞全库一刀切。
+4. **毫秒时间戳 + 软删除**：`created_at/updated_at` 全部毫秒级 bigint，删除走 `deleted_at` 软删。踩坑记录：bigint 列 × gorm `DeletedAt`（时间语义）在 PG 下 `.Delete()` 会报 `SQLSTATE 22P02`（MySQL 隐式转换救了原版）——minicoze 约定：软删一律显式 `UPDATE deleted_at = <毫秒>`，禁用 `.Delete()`；查询过滤仍由 DeletedAt 字段自动附加。
 5. **空间隔离**：所有资源都挂 `space_id`，空间即资源边界，权限检查（`domain/permission`）以空间为第一维度。
 
 ### 0.7 开发环境准备
 
-自建项目的推荐环境：
+minicoze 的实际环境（已跑通）：
 
 ```bash
 # 1. 基础环境
-Go >= 1.23、Node >= 20、Docker + Compose v2
+Go >= 1.25、Node >= 20、Docker + Compose v2
 
-# 2. 拉起基础设施（先注释掉 coze-server/coze-web，只要中间件）
-cd docker && docker compose up -d mysql redis minio
+# 2. 拉起基础设施：postgres(pgvector) + redis 两个服务
+cd docker && docker compose up -d
+# 首次建库：docker/init/01-extensions.sql（pgvector）+ 02-user/03-space/04-model
+# 由 postgres 官方入口脚本按序自动执行
 
-# 3. 初始化数据库：schema.sql 就是我们的建表参考
-mysql -h127.0.0.1 -uroot -p123456 < docker/volumes/mysql/schema.sql
+# 3. 配置：复制模板并至少设置 MINICOZE_SECRET_KEY（供应商 API Key 的加密口令）
+cp docker/.env.example docker/.env
 
-# 4. 模型密钥（二选一即可）
-#    火山方舟 ARK_API_KEY 或 OPENAI_API_KEY，后续阶段 2 接入
+# 4. 启动后端（:8888，swagger 在 /swagger/*）
+cd backend && go run .
 
-# 5. 建议的工程骨架（对照原版裁剪）
-mini-coze/
-├── api/            # handler + router + middleware
-├── application/    # 应用服务
-├── domain/         # 领域模块（与本文阶段一一对应）
-├── crossdomain/    # 跨领域接口
-├── infra/          # orm/cache/storage/embedding...
-└── conf/           # 配置
+# 5. 启动前端（Vite proxy /api -> 127.0.0.1:8888）
+cd frontend && npm run dev
+# .env.development: VITE_ENABLE_MOCK=false 直连后端；改 true 可脱离后端用 MSW 开发
+```
+
+工程骨架（实际落地，与原版裁剪对照）：
+
+```text
+minicoze/
+├── frontend/       # Vite + React + antd 单应用（MSW mock 可切换）
+├── backend/
+│   ├── api/            # handler / router / model（hz 从 Thrift IDL 生成）+ middleware
+│   ├── application/    # 用例层：user / modelmgr（DTO↔entity 翻译、脱敏出口）
+│   ├── domain/         # user / modelmgr：entity + service + repository(接口) + internal/dal(gen)
+│   ├── infra/          # orm(gen) / cache(redis) / idgen / modelfetch / secret
+│   ├── types/ pkg/     # consts / errorx / envkey / ptr / conv / logs
+│   └── docs/           # swag 生成的 API 文档
+└── docker/         # compose(postgres+redis) + init/*.sql + .env(.example)
 ```
 
 ### 0.8 实现路线图
 
 ```mermaid
 flowchart LR
-    P0["阶段0 准备<br/>全景分析"] --> P1["阶段1<br/>用户与空间"]
-    P1 --> P2["阶段2<br/>模型服务"]
+    P0["阶段0 准备<br/>全景分析"] --> P1["阶段1 用户与空间"]
+    P1 --> P2["阶段2 模型服务"]
     P2 --> P3["阶段3<br/>对话与会话"]
     P3 --> P4["阶段4<br/>智能体"]
     P4 --> P5["阶段5<br/>插件与工具"]
@@ -229,17 +236,25 @@ erDiagram
 - **`api_key`**：给 OpenAPI 用的个人密钥，库里只存哈希，`last_used_at` 顺便做审计。类型字段 `ak_type` 区分个人密钥与 PAT。
 - ID 生成：从这里开始就用雪花 ID（参考 `infra/idgen`），别用自增，后面分库分表、数据迁移都靠它。
 
+### minicoze 落地
+
+- **认证走了原版同款的 session-cookie 路线**（放弃计划中的 JWT）：session_key 存 user 表 + Redis 会话中间件全局校验，登出、踢人会话都是天然能力。
+- **密码哈希选了 Argon2id**（原版同款），对照移植了 verify 实现。
+- **超出基础 CRUD 的部分**：改密、找回密码（Redis 验证码 + 限流）、头像更新、swagger 文档、错误码体系（errorx）。
+- **前端同步落地**：Vite + React + antd 单应用（登录/注册/布局壳 + 各业务页面骨架），MSW mock 与真后端经 `VITE_ENABLE_MOCK` 一键切换。
+- 差异记录：`api_key` 表未建（留给阶段 11/PAT）；用户/空间 ID 用 IDGen 雪花（模型域则用自增，见 0.6 双轨制）。
+
 ### 本阶段交付
 
-注册/登录/登出、用户信息 CRUD、空间 CRUD、空间成员管理（邀请/改角色/移除）、空间级鉴权中间件。这是所有后续阶段的验收基座——**任何一个新资源接口，都要能回答「操作者在哪个空间、什么角色」**。
+注册/登录/登出（session-cookie）、Argon2id 密码哈希、账号信息/头像/改密/找回密码、空间 CRUD、空间成员管理（三级角色）、全局会话鉴权中间件、swagger 文档、前端登录注册全流程。这是所有后续阶段的验收基座——**任何一个新资源接口，都要能回答「操作者在哪个空间、什么角色」**。
 
 ---
 
 ## 第 2 阶段：模型服务
 
-没有模型接入，后面全是空谈。Coze 的模型管理分「静态配置种子」和「数据库三层模型」两部分。
+没有模型接入，后面全是空谈。这一阶段也是 minicoze 与原版**分叉最大**的地方：原版是「json 种子 + 三层模型表」，minicoze 重构为「供应商管理 + 同步拉取」的两层模型。
 
-### 表结构分析
+### 原版表结构分析
 
 ```mermaid
 erDiagram
@@ -273,16 +288,57 @@ erDiagram
     }
 ```
 
-### 要点解读
+原版要点：三层分「协议级元数据 / 场景级实体 / 运行级实例」，启动时读 `conf/model/model_meta.json` 把官方适配的模型清单灌入数据库，运行时按 protocol + connection 实例化对应的 Eino `ChatModel`。
 
-- **为什么分三层**：`model_meta` 是「协议级」元数据（如方舟协议的 doubao-pro），`model_entity` 是「场景级」实体（同一个模型在不同场景给不同默认参数），`model_instance` 是「运行级」实例（Embedding/Rerank/LLM 统一抽象，全 JSON 字段）。自建简化版可以砍成两层：模型定义 + 场景配置。
-- **种子灌入**：启动时读 `conf/model/model_meta.json`（结构是 provider → model → capability/parameters），把官方适配的模型清单写入数据库；`template/*.yaml` 定义每类协议有哪些可调参数（temperature、top_p 的范围、精度、文案）。
-- **与 Eino 的桥接**：每个 `protocol` 对应一个 eino-ext 适配器（`components/model/ark|openai|claude|deepseek|gemini|qwen|ollama`）。运行时按模型的 protocol + conn_config 实例化对应的 Eino `ChatModel`，全系统其他模块只面向 Eino 的统一接口。
-- 自建建议：先只接一种协议（OpenAI 兼容），把「按配置实例化模型」的工厂函数写稳，再多协议扩展。
+### minicoze 落地表结构（两层模型）
+
+分析原版时发现：`model_meta` / `model_entity` 是**废弃的 v1 设计**——gen 配置里已被注释、全库无幸存代码，现行方案只有 `model_instance`（供应商信息以 JSON 内嵌在每行）。minicoze 借这次从零实现做了重塑：**把内嵌的供应商拆成独立表，交互从「json 种子预置」改为「provider-first 同步拉取」**。
+
+```mermaid
+erDiagram
+    model_provider ||--o{ model_instance : "provider_id"
+
+    model_provider {
+        bigint id PK "供应商ID(IDENTITY自增)"
+        varchar name "显示名"
+        varchar protocol "协议族: openai/ollama"
+        varchar api_protocol "API面: completions/responses"
+        varchar base_url "服务地址"
+        varchar api_key "密文(AES-GCM)"
+        int status "1启用 0停用"
+    }
+    model_instance {
+        bigint id PK "模型ID(IDENTITY自增)"
+        bigint provider_id FK "所属供应商"
+        varchar name "API调用名(同步去重键)"
+        varchar display_name "展示名"
+        smallint type "0LLM 1Embedding 2Rerank"
+        bigint context_window "上下文,0=未知"
+        bigint max_output_tokens "最大输出,0=未知"
+        jsonb capability "能力开关"
+        jsonb parameters "参数元数据"
+        smallint source "1同步 2手动"
+        int status "1启用 0停用"
+    }
+```
+
+### minicoze 要点解读
+
+- **provider-first 取代 json 种子**：用户先接入供应商（protocol + base_url + api_key），点「同步」由后端调远端列表端点（openai 兼容 `GET /v1/models`、ollama `GET /api/tags`）拉取模型，按 `(provider_id, name)` 部分唯一索引**补缺入库、只补不覆盖**——手动调整的类型/能力不会被同步冲掉。消灭了原版「json 种子预置模型清单」的维护成本，也天然支持任意 openai 兼容服务（DeepSeek/硅基流动/vLLM/LM Studio）。
+- **事实/旋钮分离**：`context_window`、`max_output_tokens` 是模型的「事实属性」（独立列，0=未知——列表端点拿不到，用户手填）；`temperature` 等是「旋钮」（`parameters` jsonb 存元数据：name/label/type/min/max/default），编辑弹窗只读展示，M2 智能体参数面板消费同一份元数据。
+- **密钥安全链路**：api_key 在 DAL 写入路径 AES-GCM 加密、读出路径解密（entity/全程明文）；API 响应在 application 层脱敏为 `sk-1****xyz`。加密不出 DAL、脱敏只在 application、明文的唯一去向是发给 LLM 服务的请求头。
+- **协议分发的注册表模式**：`infra/modelfetch/impl/<protocol>` 每协议一个实现（对齐原版 modelbuilder 的 map 分发），新协议 = 加目录 + 注册一行。与 Eino 的桥接留给对话阶段——模型实例 + 供应商连接信息组装后交给模型工厂，届时评估直接用 Eino 还是先自研薄接口。
+- **status 用 1/0 且停用必须走专用方法**：gorm 对零值字段默认跳过 + 列有 `default:1`，借道通用 UPDATE 停用会被静默吞掉——启停一律走 `UpdateSimple` 显式赋值的专用 DAO 方法。
 
 ### 本阶段交付
 
-模型列表管理接口（增删改查/启停）、模型参数模板、`ChatModel` / `Embedding` 工厂。验收标准：改数据库里的连接配置，不改代码，切换模型供应商。
+**后端**：`model_provider` / `model_instance` 两表 + gen；供应商 CRUD/启停/级联软删；模型同步（modelfetch：openai 兼容 + ollama，补缺不覆盖 + 按名猜类型）；模型手动录入/编辑/启停/删除；11 个接口全部带 swagger 文档。
+
+**前端**：模型服务页全流程——供应商卡片式管理（创建/编辑/启停/删除/同步）、模型编辑弹窗（能力开关 + 参数元数据只读卡片），经 Vite 代理直连后端。
+
+**行为约定**：添加供应商 → 同步 → 编辑/启停/删除全流程；API key 加密落库、响应只出脱敏值；改连接配置不改代码即可切换模型。
+
+**踩坑记录**：PG 索引名 schema 级唯一（索引名统一加表前缀）；bigint `deleted_at` × `gorm.DeletedAt` 在 PG 下 `.Delete()` 必炸（软删改显式 UPDATE 毫秒）；gorm 零值跳过 → 停用/清空字段必须走专用方法或 Select 白名单；`UpdateModel` 的 Select 白名单不含 Status/Parameters，防止启停状态被编辑表单覆写、参数元数据被清空。
 
 ---
 
